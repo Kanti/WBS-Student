@@ -1,0 +1,180 @@
+<html>
+	<head>
+
+
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/jquery.flot.min.js"></script>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="js/bootstrap.min.js"></script>
+		<script src='js/myo.js'></script>
+
+		<!--<script src='deviceGraphs.js'></script>-->
+		<script src='emgGraphs.js'></script>
+
+		<link rel="icon" href="img/favicon.ico" type="image/x-icon" />
+		<link rel="stylesheet" type="text/css" href="style.css" />
+
+		<link href="css/bootstrap-formhelpers.min.css" rel="stylesheet">
+  		<script src="js/bootstrap-formhelpers.min.js"></script>
+
+		<title>Data Acquisition - Myo</title>
+	</head>
+	<body>
+
+		<div class='orientationGraph'>
+
+		</div>
+
+
+		<div class='emgGraphs'>
+			<div id='pod0' class='emgGraph'></div>
+			<div id='pod1' class='emgGraph'></div>
+			<div id='pod2' class='emgGraph'></div>
+			<div id='pod3' class='emgGraph'></div>
+			<div id='pod4' class='emgGraph'></div>
+			<div id='pod5' class='emgGraph'></div>
+			<div id='pod6' class='emgGraph'></div>
+			<div id='pod7' class='emgGraph'></div>
+		</div>
+		<br>
+		<br>
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-12 col-sm-12 col-12">
+					<button id="startRecording" type="button" class="btn btn-primary disabled">Start Recording</button>
+					<button id="stopRecording"  type="button" class="btn btn-primary disabled">Stop Recording</button>
+					<br>
+					<br>
+					<form class="example form-inline">
+						<p class="text-primary"><h4>Class:</h4></p>
+						<div class="bfh-slider" data-name="Force" data-min="1" data-max="20" data-value="1">
+				          <input type="hidden" name="Force" value="1">
+				            <div class="bfh-slider-handle" style="left: 15px;">
+				              <div class="bfh-slider-value">1</div>
+				            </div>
+				        </div>
+			        </form>
+					<form class="example form-inline">
+						<p class="text-primary"><h4>Test Subject Number:</h4></p>
+						<input type="text" name="testSubjectNumber" class="form-control bfh-number" data-min="1" data-max="10000000">
+					</form>
+					
+					<button id="saveData" type="button" class="btn btn-primary disabled">Save</button>
+					
+					<div class="row">
+				<div class="col-lg-6 col-sm-6 col-6">
+					<form class="example form-inline">
+						<p class="text-primary"><h4>Current Recorded Data Number:</h4></p>
+						<input type="text" name="recordedDataNumber" class="form-control bfh-number" data-min="1" data-max="100000000000000000000000000000000">
+					</form>
+					</div>
+					<div class="col-lg-6 col-sm-6 col-6">
+					<form class="example form-inline">
+						<p class="text-primary"><h4>Total Recorded Data Number:</h4></p>
+						<input type="text" name="totalRecordedDataNumber" class="form-control bfh-number" data-min="1" data-max="10000000000000000000000000000000">
+					</form>
+					</div>
+					<button id="downloadData" type="button" class="btn btn-primary disabled">Download</button>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript">
+		
+		var dataset = [];
+		var currentData = [];
+
+		$( window ).load(function() {
+			dataset.push(['EMG1','EMG2','EMG3','EMG4','EMG5','EMG6','EMG7','EMG8','accX','accY','accZ','oriX','oriY','oriZ','oriW','gyrX','gyrY','gyrZ','Class','Subject']);
+			if ( Myo.myos[0].connected == true){
+				$('#startRecording').removeClass('disabled');
+			}
+		});
+		Myo.on('connected', function(){
+			$('#startRecording').removeClass('disabled');
+		})
+		Myo.on('disconnected', function(){
+			$('#startRecording').addClass('disabled');
+			$('#stopRecording').addClass('disabled');
+		})
+		var latestEmgData = [];
+		Myo.on('emg', function(data){
+			//if ( $( "#startRecording" ).hasClass( "disabled" ) == true && $( "#stopRecording" ).hasClass( "disabled" ) == false) {
+				latestEmgData = [];
+				Array.prototype.push.apply(latestEmgData, data);
+			//}
+		})
+		
+		Myo.on('imu', function(data){
+			if ( $( "#startRecording" ).hasClass( "disabled" ) == true && $( "#stopRecording" ).hasClass( "disabled" ) == false) {
+				var row = [];
+				Array.prototype.push.apply(row, latestEmgData);
+				Array.prototype.push.apply(row, [data.accelerometer.x]);
+				Array.prototype.push.apply(row, [data.accelerometer.y]);
+				Array.prototype.push.apply(row, [data.accelerometer.z]);
+				Array.prototype.push.apply(row, [data.orientation.x]);
+				Array.prototype.push.apply(row, [data.orientation.y]);
+				Array.prototype.push.apply(row, [data.orientation.z]);
+				Array.prototype.push.apply(row, [data.orientation.w]);
+				Array.prototype.push.apply(row, [data.gyroscope.x]);
+				Array.prototype.push.apply(row, [data.gyroscope.y]);
+				Array.prototype.push.apply(row, [data.gyroscope.z]);
+				currentData.push(row);
+				$('[name="recordedDataNumber"]').val(currentData.length);
+			}
+		})
+		
+		$("#startRecording").click(function() {
+			if ( $( "#startRecording" ).hasClass( "disabled" ) == false) {
+				currentData = [];
+				$('#startRecording').addClass('disabled');
+				$('#stopRecording').removeClass('disabled');
+				$('#saveData').addClass('disabled');
+				$('#downloadData').addClass('disabled');
+			}
+		});
+		$("#stopRecording").click(function() {
+			if ( $( "#stopRecording" ).hasClass( "disabled" ) == false) {
+				$('#startRecording').removeClass('disabled');
+				$('#stopRecording').addClass('disabled');
+				$('#saveData').removeClass('disabled');
+				$('#downloadData').removeClass('disabled');
+			}
+		});
+		$("#saveData").click(function() {
+			$('#saveData').addClass('disabled');
+
+			var force = $('[name="Force"]')[0].value;	
+			var testSubjectNumber = $('[name="testSubjectNumber"]')[0].value;
+			currentData.forEach(function(row) {
+			    row.push(+force, +testSubjectNumber);
+			});
+			Array.prototype.push.apply(dataset,currentData);
+			//$('[name="recordedDataNumber"]').val(currentData.length);
+			$('[name="totalRecordedDataNumber"]').val(dataset.length);
+
+
+		});
+		$("#downloadData").click(function() {
+			var csvContent = "data:text/csv;charset=utf-8,";
+			dataset.forEach(function(infoArray, index){
+			   dataString = infoArray.join(",");
+			   csvContent += index < dataset.length ? dataString+ "\n" : dataString;
+			}); 
+
+			var encodedUri = encodeURI(csvContent);
+			var link = document.createElement("a");
+			link.setAttribute("href", encodedUri);
+			link.setAttribute("download", "emgdata.csv");
+			document.body.appendChild(link); // Required for FF
+
+			link.click(); // This will download the data file named "my_data.csv".
+		});
+	</script>
+</html>
