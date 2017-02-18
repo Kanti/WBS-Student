@@ -1,0 +1,10 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Kanti\\": "src"
+    }
+  },
+  "require": {
+    "php-ai/php-ml": "^0.3.0"
+  }
+}
